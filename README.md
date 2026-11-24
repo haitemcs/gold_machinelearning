@@ -1,42 +1,42 @@
 # Gold Machine Learning
 
-Daily gold futures volatility forecasting using Yahoo Finance historical data.
+This project uses daily gold futures data from Yahoo Finance:
 
-This project adapts the workflow from the BTC **Volatility Forecasting** notebook:
-- PyTorch neural network
-- XGBoost regressor
-- Ridge regression baseline
-- Chronological train/test split
-- Daily OHLCV feature engineering
+- **Ticker:** `GC=F` (COMEX Gold Futures)
+- **Interval:** 1 day
+- **Start date:** 2000-01-01
 
-## Data
+## Notebooks
 
-The project uses Yahoo Finance ticker **GC=F** (COMEX Gold Futures), interval **1d**. Run the notebook or `src/download_data.py` to download historical data and save it to `data/gold_daily.csv`.
+### Gold Direction Prediction.ipynb
 
-The CSV is generated locally and is not committed to the repository. Yahoo Finance data availability and history can change.
+This is the main notebook. It predicts whether the next trading day's closing price will go **UP** or **DOWN**.
+
+It compares:
+- Logistic Regression
+- Random Forest
+- PyTorch Neural Network
+
+It reports accuracy, balanced accuracy, precision, recall, F1-score and ROC-AUC.
+
+### Volatility Forecasting.ipynb
+
+This is a separate experiment. It predicts the next day's normalized high-low range. It does **not** predict whether gold will go up or down.
 
 ## Setup
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\\Scripts\\activate
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
+python src/download_data.py
+jupyter notebook
 ```
 
-Open `Volatility Forecasting.ipynb` and run the cells from top to bottom.
+Open the notebook you want to run and execute its cells from top to bottom.
 
-## Target
-
-The first version forecasts the **next trading day's normalized high-low range**:
-
-`next_day_range / rolling_20_day_average_range`
-
-This is a volatility proxy, not a directional buy/sell signal or a guaranteed price forecast.
+The downloaded CSV is saved locally at `data/gold_daily.csv` and is not committed to GitHub.
 
 ## Important
 
-- Features are built only from information available at the prediction time.
-- The split is chronological; scalers are fitted on training data only.
-- The test set is held out from model fitting.
-- Evaluate against simple baselines before interpreting model performance.
-- This project is for educational research, not financial advice.
+The direction model uses historical prices and technical features. It is a learning and research project, not a reliable trading signal. Check its performance on unseen dates and compare it with simple baselines before drawing conclusions.
