@@ -1,44 +1,36 @@
-from pathlib import Path
+import os
 
 import pandas as pd
 import yfinance as yf
 
 
-TICKER = "GC=F"
-START_DATE = "2000-01-01"
-OUTPUT_PATH = Path("data/gold_daily.csv")
+ticker = "GC=F"
+start_date = "2000-01-01"
+file_path = "data/gold_daily.csv"
 
+os.makedirs("data", exist_ok=True)
 
-def main() -> None:
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+gold = yf.download(
+    ticker,
+    start=start_date,
+    interval="1d",
+    auto_adjust=False,
+    progress=False
+)
 
-    data = yf.download(
-        TICKER,
-        start=START_DATE,
-        interval="1d",
-        auto_adjust=False,
-        progress=False,
-    )
+if gold.empty:
+    raise RuntimeError("No data was downloaded. Check your internet connection.")
 
-    if data.empty:
-        raise RuntimeError(
-            "Yahoo Finance returned no data. Check your internet connection "
-            "and confirm that the ticker is available."
-        )
+# Handle the column format used by some yfinance versions.
+if isinstance(gold.columns, pd.MultiIndex):
+    gold.columns = gold.columns.get_level_values(0)
 
-    # Recent yfinance versions can return MultiIndex columns for one ticker.
-    if isinstance(data.columns, pd.MultiIndex):
-        data.columns = data.columns.get_level_values(0)
+gold.columns = [str(column).lower().replace(" ", "_") for column in gold.columns]
+gold.index.name = "date"
+gold = gold[~gold.index.duplicated()].sort_index()
 
-    data.columns = [str(column).lower().replace(" ", "_") for column in data.columns]
-    data.index.name = "date"
-    data = data[~data.index.duplicated(keep="first")].sort_index()
-    data.to_csv(OUTPUT_PATH)
+gold.to_csv(file_path)
 
-    print(f"Downloaded {len(data):,} daily rows for {TICKER}.")
-    print(f"Date range: {data.index.min().date()} to {data.index.max().date()}")
-    print(f"Saved CSV: {OUTPUT_PATH}")
-
-
-if __name__ == "__main__":
-    main()
+print("Downloaded rows:", len(gold))
+print("Date range:", gold.index.min().date(), "to", gold.index.max().date())
+print("Saved to:", file_path)
